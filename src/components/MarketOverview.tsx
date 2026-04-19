@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Zap, TrendingUp, TrendingDown, Loader2, Sparkles, AlertCircle, ArrowUpRight, ShieldCheck, Timer, Activity } from 'lucide-react';
 import { getTopCoins } from '../services/crypto';
 import { smartScan, longTermScan, scalpScan, ScanOpportunity } from '../services/gemini';
-import { cn, formatCurrency, formatPercentage } from '../utils';
+import { sendNotification, requestNotificationPermission, cn, formatCurrency, formatPercentage } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface MarketOverviewProps {
@@ -17,6 +17,7 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelect }) => {
   const [isLive, setIsLive] = useState(false);
   const [lastScanTime, setLastScanTime] = useState<Date | null>(null);
   const [scanType, setScanType] = useState<'FUTURES' | 'LONG_TERM' | 'SCALPING'>('FUTURES');
+  const [notifiedOpportunities, setNotifiedOpportunities] = useState<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     try {
@@ -35,6 +36,18 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelect }) => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  const toggleLive = async () => {
+    if (!isLive) {
+      const hasPermission = await requestNotificationPermission();
+      if (hasPermission) {
+        sendNotification('Live Signal Monitor Active', {
+          body: 'You will receive notifications for high-priority trading opportunities.'
+        });
+      }
+    }
+    setIsLive(!isLive);
+  };
+
   const runScan = useCallback(async () => {
     if (coins.length === 0) return;
     setScanning(true);
@@ -47,14 +60,29 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelect }) => {
       } else if (scanType === 'SCALPING') {
         opportunities = await scalpScan(coins);
       }
+      
       setBestPairs(opportunities);
       setLastScanTime(new Date());
+
+      // Send notifications for high-priority signals in live mode
+      if (isLive) {
+        opportunities.forEach(opp => {
+          const notificationKey = `${opp.id}-${opp.type}-${opp.score}`;
+          if (opp.priority === 'HIGH' && opp.score >= 85 && !notifiedOpportunities.has(notificationKey)) {
+            sendNotification(`High-Score ${opp.type} Opportunity: ${opp.symbol}`, {
+              body: `${opp.reason}\nScore: ${opp.score}% | Leverage: ${opp.leverage}`,
+              tag: opp.id
+            });
+            setNotifiedOpportunities(prev => new Set(prev).add(notificationKey));
+          }
+        });
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setScanning(false);
     }
-  }, [coins, scanType]);
+  }, [coins, scanType, isLive, notifiedOpportunities]);
 
   // Continuous monitoring effect
   useEffect(() => {
@@ -119,7 +147,7 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelect }) => {
           </div>
 
           <button
-            onClick={() => setIsLive(!isLive)}
+            onClick={toggleLive}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border",
               isLive 
