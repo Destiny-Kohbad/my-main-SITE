@@ -17,11 +17,14 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'global': 'globalThis',
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
         'node-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
+        'cross-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
+        'isomorphic-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
       },
     },
     server: {

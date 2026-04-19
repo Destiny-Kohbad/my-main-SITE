@@ -21,6 +21,73 @@ const BINGX_API_URL = "https://open-api.bingx.com";
 const BINGX_API_KEY = process.env.BINGX_API_KEY;
 const BINGX_API_SECRET = process.env.BINGX_API_SECRET;
 
+const COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3";
+
+// Crypto Proxy Endpoints
+app.get("/api/crypto/top", async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const response = await axios.get(`${COINGECKO_BASE_URL}/coins/markets`, {
+      params: {
+        vs_currency: "usd",
+        order: "market_cap_desc",
+        per_page: limit,
+        page: 1,
+        sparkline: true,
+        price_change_percentage: "24h"
+      }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/crypto/details/:id", async (req, res) => {
+  try {
+    const response = await axios.get(`${COINGECKO_BASE_URL}/coins/${req.params.id}`, {
+      params: {
+        localization: false,
+        tickers: false,
+        market_data: true,
+        community_data: false,
+        developer_data: false,
+        sparkline: true
+      }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/crypto/history/:id", async (req, res) => {
+  try {
+    const { days = 1 } = req.query;
+    const response = await axios.get(`${COINGECKO_BASE_URL}/coins/${req.params.id}/market_chart`, {
+      params: {
+        vs_currency: "usd",
+        days
+      }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/crypto/search", async (req, res) => {
+  try {
+    const { query } = req.query;
+    const response = await axios.get(`${COINGECKO_BASE_URL}/search`, {
+      params: { query }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 function getBingXSignature(parameters: string, secret: string) {
   return crypto
     .createHmac("sha256", secret)

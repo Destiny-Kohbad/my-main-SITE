@@ -1,4 +1,4 @@
-export default window.fetch;
-export const Request = window.Request;
-export const Response = window.Response;
-export const Headers = window.Headers;
+export default globalThis.fetch;
+export const Request = globalThis.Request;
+export const Response = globalThis.Response;
+export const Headers = globalThis.Headers;
