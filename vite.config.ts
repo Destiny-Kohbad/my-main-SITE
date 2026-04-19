@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'global': 'globalThis',
+      global: 'globalThis',
     },
     resolve: {
       alias: {
@@ -25,6 +25,8 @@ export default defineConfig(({ mode }) => {
         'node-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
         'cross-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
         'isomorphic-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
+        'whatwg-fetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
+        'unfetch': path.resolve(__dirname, 'src/fetch-shim.ts'),
       },
     },
     server: {

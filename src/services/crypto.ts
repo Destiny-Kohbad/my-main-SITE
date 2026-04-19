@@ -1,19 +1,38 @@
+const BASE_URL = 'https://api.coingecko.com/api/v3';
+
+async function fetchWithFallback(apiPath: string, fallbackUrl: string) {
+  try {
+    const response = await fetch(apiPath);
+    if (response.ok) return response.json();
+  } catch (e) {
+    // Silent fail to fallback
+  }
+  
+  const fallbackResponse = await fetch(fallbackUrl);
+  if (!fallbackResponse.ok) throw new Error('Failed to fetch from both local API and backup provider');
+  return fallbackResponse.json();
+}
+
 export async function getTopCoins(limit = 50) {
-  const response = await fetch(`/api/crypto/top?limit=${limit}`);
-  if (!response.ok) throw new Error('Failed to fetch market data');
-  return response.json();
+  return fetchWithFallback(
+    `/api/crypto/top?limit=${limit}`,
+    `${BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=true&price_change_percentage=24h`
+  );
 }
 
 export async function getCoinDetails(id: string) {
-  const response = await fetch(`/api/crypto/details/${id}`);
-  if (!response.ok) throw new Error('Failed to fetch coin details');
-  return response.json();
+  return fetchWithFallback(
+    `/api/crypto/details/${id}`,
+    `${BASE_URL}/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=true`
+  );
 }
 
 export async function getCoinHistory(id: string, days = 1) {
-  const response = await fetch(`/api/crypto/history/${id}?days=${days}`);
-  if (!response.ok) throw new Error('Failed to fetch history');
-  const data = await response.json();
+  const data = await fetchWithFallback(
+    `/api/crypto/history/${id}?days=${days}`,
+    `${BASE_URL}/coins/${id}/market_chart?vs_currency=usd&days=${days}`
+  );
+  
   return data.prices.map(([timestamp, price]: [number, number]) => ({
     time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     price: price,
@@ -22,8 +41,9 @@ export async function getCoinHistory(id: string, days = 1) {
 }
 
 export async function searchCoins(query: string) {
-  const response = await fetch(`/api/crypto/search?query=${query}`);
-  if (!response.ok) throw new Error('Search failed');
-  const data = await response.json();
+  const data = await fetchWithFallback(
+    `/api/crypto/search?query=${query}`,
+    `${BASE_URL}/search?query=${query}`
+  );
   return data.coins;
 }
