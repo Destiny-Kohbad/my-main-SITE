@@ -3,7 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>CryptoSignal AI</title>
+    <script>
+      // Prevent libraries from crashing when trying to polyfill fetch on the read-only window object
+      window.global = {};
+      // Some libraries expect global to be window, but we want to intercept 'fetch'
+      // If they try to set global.fetch, it will now set it on this empty object instead of window
+      Object.defineProperty(window.global, 'fetch', {
+        get: () => window.fetch,
+        set: () => { console.warn('Blocked attempt to overwrite fetch'); },
+        configurable: true
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
