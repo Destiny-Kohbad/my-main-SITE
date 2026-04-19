@@ -1,6 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+let aiInstance: any = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+      console.error("VITE_GEMINI_API_KEY is not defined. Please set it in your environment variables.");
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export interface CryptoAnalysis {
   noTrade: boolean;
@@ -26,6 +38,9 @@ export async function analyzeCrypto(
   priceData: any[],
   marketStats: any
 ): Promise<CryptoAnalysis> {
+  const ai = getAI();
+  if (!ai) return { noTrade: true, noTradeReason: "AI Service not configured." };
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -112,6 +127,9 @@ export interface ScanOpportunity {
 }
 
 export async function smartScan(topCoins: any[]): Promise<ScanOpportunity[]> {
+  const ai = getAI();
+  if (!ai) return [];
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -160,6 +178,9 @@ export async function smartScan(topCoins: any[]): Promise<ScanOpportunity[]> {
 }
 
 export async function scalpScan(topCoins: any[]): Promise<ScanOpportunity[]> {
+  const ai = getAI();
+  if (!ai) return [];
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -217,6 +238,9 @@ export async function analyzeScalpOpportunity(
   priceData: any[],
   marketStats: any
 ): Promise<CryptoAnalysis> {
+  const ai = getAI();
+  if (!ai) return { noTrade: true, noTradeReason: "AI Service not configured." };
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -275,6 +299,9 @@ export async function analyzeScalpOpportunity(
 }
 
 export async function longTermScan(topCoins: any[]): Promise<ScanOpportunity[]> {
+  const ai = getAI();
+  if (!ai) return [];
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `

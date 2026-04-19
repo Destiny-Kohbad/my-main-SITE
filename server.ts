@@ -3,6 +3,11 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import axios from "axios";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -128,7 +133,17 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static("dist"));
+    const distPath = path.join(__dirname, "dist");
+    app.use(express.static(distPath));
+    
+    // Fallback for SPA routing
+    app.get("*", (req, res, next) => {
+      // Don't intercept API calls
+      if (req.url.startsWith("/api")) {
+        return next();
+      }
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
