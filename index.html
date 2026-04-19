@@ -5,15 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CryptoSignal AI</title>
     <script>
-      // Prevent libraries from crashing when trying to polyfill fetch on the read-only window object
-      window.global = {};
-      // Some libraries expect global to be window, but we want to intercept 'fetch'
-      // If they try to set global.fetch, it will now set it on this empty object instead of window
-      Object.defineProperty(window.global, 'fetch', {
-        get: () => window.fetch,
-        set: () => { console.warn('Blocked attempt to overwrite fetch'); },
-        configurable: true
-      });
+      (function() {
+        // Create a safe global proxy
+        var safeGlobal = {
+          fetch: window.fetch.bind(window),
+          global: null,
+          window: window,
+          self: window
+        };
+        safeGlobal.global = safeGlobal;
+
+        window.global = new Proxy(safeGlobal, {
+          get: function(target, prop) {
+            if (prop in target) return target[prop];
+            return window[prop];
+          },
+          set: function(target, prop, value) {
+            if (prop === 'fetch') {
+              console.warn('Blocked attempt to overwrite fetch on global');
+              return true;
+            }
+            try {
+              window[prop] = value;
+            } catch (e) {
+              target[prop] = value;
+            }
+            return true;
+          }
+        });
+      })();
     </script>
   </head>
   <body>
